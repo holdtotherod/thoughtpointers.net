@@ -2,11 +2,11 @@
 title: Starting a blog with Toto
 date: 30/09/2012
 
-A good friend of mine, Jason Larsen, talked to me the other day about an awesome way of blogging. Instead of using some service like Blogger or Wordpress, why not take a minimalist, more hackker-like approach. Write your posts in markdown in simple text files, maintain your blog as a git repo, and simply push to publish your articles. The approach sounded appealing, so I decided to give it a try.
+A good friend of mine, [Jason Larsen](http://jasonlarsen.me), talked to me the other day about an awesome way of blogging. Instead of using some service like Blogger or Wordpress, why not take a minimalist, more hacker-like approach. Write your posts in markdown in simple text files, maintain your blog as a git repo, and simply push to publish your articles. The approach sounded appealing, so I decided to give it a try.
 
-My first approach was using Github pages and jekyll. That probably could have worked well, but in the end I decided I wanted a bit more control of the server-side, just in case I wanted to get more dynamic. So I tried the solution Jason also ended up using: Toto. It's a simple blogging framework written in ruby, and is only a few hundred lines of code. Nice.
+My first approach was using Github pages and jekyll. That probably could have worked well, but in the end I decided I wanted a bit more control of the server-side, just in case I wanted to get more dynamic. So I tried the solution Jason also ended up using: [Toto](http://cloudhead.io/toto). It's a simple blogging framework written in ruby, and is only a few hundred lines of code. Nice.
 
-For deploying my blog, I'm using heroku. You can run a simple app on Heroku free, and can even point a custom domain there. Comments are provided by Disqus. 
+For deploying my blog, I'm using [heroku](http://www.heroku.com). You can run a simple app on heroku free, and can even point a custom domain there. Comments are provided by [Disqus](http://disqus.com). 
 
 Here's the setup:
 
