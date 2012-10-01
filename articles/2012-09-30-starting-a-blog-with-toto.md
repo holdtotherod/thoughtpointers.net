@@ -1,0 +1,48 @@
+---
+title: Starting a blog with Toto
+date: 30/09/2012
+
+A good friend of mine, Jason Larsen, talked to me the other day about an awesome way of blogging. Instead of using some service like Blogger or Wordpress, why not take a minimalist, more hackker-like approach. Write your posts in markdown in simple text files, maintain your blog as a git repo, and simply push to publish your articles. The approach sounded appealing, so I decided to give it a try.
+
+My first approach was using Github pages and jekyll. That probably could have worked well, but in the end I decided I wanted a bit more control of the server-side, just in case I wanted to get more dynamic. So I tried the solution Jason also ended up using: Toto. It's a simple blogging framework written in ruby, and is only a few hundred lines of code. Nice.
+
+For deploying my blog, I'm using heroku. You can run a simple app on Heroku free, and can even point a custom domain there. Comments are provided by Disqus. 
+
+Here's the setup:
+
+1. Create a heroku account. Install the heroku toolchain and login on your system.
+2. Install the necessary gems.
+		gem install heroku toto thin
+3. Download the Toto base template, Dorothy.
+		git clone git://github.com/cloudhead/dorothy.git YOUR_BLOG_NAME
+		cd YOUR_BLOG_NAME
+4. Create your heroku app.
+		heroku create YOUR_BLOG_NAME
+5. Set it up to use bundler instead of the .gems file.
+	1. Edit config.ru and add the following two lines at the top:
+			require rubygems'
+			require 'bundler'
+			Bundler.require
+	2. Remove .gems file
+			rm .gems
+	3. Add a file named Gemifile with the contents:
+			source "http://rubygems.org"
+			
+			gem "builder"
+			gem "rdiscount"
+			gem "toto"
+6. Optionally setup a custom domain, adding a CNAME that points to YOUR_BLOG_NAME.herokuapp.com. Then add the domain to your heroku app:
+		heroku domains:add YOUR_CUSTOM_DOMAIN
+7. Signup for disqus to add comments to your blog.
+8. Finish template setup by editing config.ru and uncommenting and setting the author and title, and enabling disqus comments. Mine looks something like this:
+		# Add your settings here
+		# set [:setting], [value]
+		#   
+		set :author,    "Stephen Lottermoser"                # blog author
+		set :title,     "Thought Pointers"                   # site title
+		# set :root,      "index"                                   # page to load on /
+		# set :date,      lambda {|now| now.strftime("%d/%m/%Y") }  # date format for articles
+		# set :markdown,  :smart                                    # use markdown + smart-mode
+		set :disqus,    true   
+9. Finally, push your app to heroku.
+		git push heroku master
