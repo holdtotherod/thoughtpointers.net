@@ -1,4 +1,4 @@
-title: Retaliation on OS X 10.8
+title: Retaliation on OS X
 
 Retaliation on OS X 10.8
 ------------------------
