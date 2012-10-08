@@ -19,7 +19,7 @@ Here's the setup:
 4. Create your heroku app.
 		heroku create YOUR_BLOG_NAME
 5. Set it up to use bundler instead of the .gems file.
-	1. Edit config.ru and add the following two lines at the top:
+	1. Edit config.ru and add the following three lines at the top:
 			require rubygems'
 			require 'bundler'
 			Bundler.require
