@@ -1,0 +1,144 @@
+---
+title: Installing Gitlab on OS X
+date: 07/10/2012
+
+So it turns out enterprise Github is really expensive, something like $250 per person. My company abolutely refuses to have their code hosted somewhere external, so we're not able to use this amazing tool. In search of something comparable, we found [Gitlab](http://gitlabhq.com/), which basically seems like a dumbed-down open-source version of Github you can host yourself. It's pretty cool, but it lacks repo forking, gists, and public repos are not supported out of the box. You have to add some [patches](http://shanetully.com/2012/08/gitlab-internally-public-projects/) to kind of hack them into Gitlab.
+
+Lastly, the setup instructions are for Debian systems. From the install doc:
+
+>You might have some luck using these, but no guarantees:
+>
+>    - MacOS X
+>    - FreeBSD
+
+Sounds like a challenge! After spending some time translating user/group management to OS X language, and using brew in place of apt-get, I finally got it working on the Mac Pro sitting in our cube. I even wrote down all the steps I took in a Gist on Github. Right when I finished and was about to publish the Gist, Safari crashed :/ I was very angry. I did my best to recover the steps, but until I go through the process again, I can't gaurantee I didn't miss something.
+
+System: OS X 10.7.5, Xcode: 4.5
+
+As admin:
+---------
+
+In System Preferences, setup users git and gitlab as standard users. Setup a group called gitg (meaning git group) and add git and gitlab to it. Make sure they have Remote Login access in Sharing.
+
+Run the following in terminal:
+
+    brew update
+    brew --config # I had just updated Xcode, so need brew to configure itself again
+    brew doctor # -> Your system is raring to brew!
+    
+    brew install libksba # -> for ruby 1.9.3 dependency
+    brew install icu4c # -> for gitlab dependency
+    brew install redis # -> another gitlab dependency
+    brew install mysql # -> I didn't want to use sqlite. Setup to start at launch, set root pass.
+    mysql.start
+    
+    # More gitlab dependencies
+    sudo easy_install pip
+    sudo pip install pygments
+
+As gitlab:
+----------
+    curl -L https://get.rvm.io | bash -s stable
+    rvm install 1.9.3
+
+    ssh-keygen -q -N '' -t rsa -f ~/.ssh/id_rsa
+
+As git:
+-------
+    git clone -b gl-v304 https://github.com/gitlabhq/gitolite.git gitolite
+    mkdir bin
+    echo -e "PATH=~/bin:\$PATH" >> ~/.profile
+    source ~/.profile
+    gitolite/install -ln ~/bin
+
+As admin:
+---------
+    sudo cp /Users/gitlab/.ssh/id_rsa.pub /Users/git/gitlab.pub
+    sudo chmod 0444 /home/git/gitlab.pub
+
+As git:
+-------
+    gitolite setup -pk ~/gitlab.pub
+
+    vim ~/.gitolite.rc
+    # :%s/0077/0007/g
+    # :wq
+
+As admin:
+---------
+    sudo chmod -R g+rwX /Users/git/repositories/
+    sudo chown -R git:gitg /Users/git/repositories/
+
+As gitlab:
+----------
+    # clone admin repo to add localhost to known_hosts
+    # & be sure your user has access to gitolite
+    git clone git@localhost:gitolite-admin.git gitolite-admin
+
+    # if it succeeded you can remove it
+    sudo rm -rf gitolite-admin
+
+    gem install charlock_holmes --version '0.6.8' # Resulted in a lot of ASCII conversion errors/warnings
+    gem install bundler
+
+    git clone -b stable https://github.com/gitlabhq/gitlabhq.git gitlab
+    cd gitlab
+    cp config/gitlab.yml.example config/gitlab.yml
+    vim config/gitlab.yml
+    # :%s/\/home\//\/Users\//g
+    # :wq
+    
+    # Login to MySQL
+    $ mysql -u root -p
+
+    # Create the GitLab production database
+    mysql> CREATE DATABASE IF NOT EXISTS `gitlabhq_production` DEFAULT CHARACTER SET `utf8` COLLATE `utf8_unicode_ci`;
+
+    # Create the MySQL User change $password to a real password
+mysql> CREATE USER 'gitlab'@'localhost' IDENTIFIED BY '$password';
+    
+    # Grant proper permissions to the MySQL User
+    mysql> GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER ON `gitlabhq_production`.* TO 'gitlab'@'localhost';
+    
+    # Exit MySQL Server and copy the example config, make sure to update username/password in config/database.yml
+    cp config/database.yml.mysql config/database.yml
+
+Edit the database.yml file and fill in the necessary mysql login details.
+
+
+    bundle install --without development test --deployment
+    bundle exec rake gitlab:app:setup RAILS_ENV=production
+
+As Admin:
+---------
+    sudo cp /Users/stephen/lib/hooks/post-receive /Users/git/.gitolite/hooks/common/post-receive
+    sudo chown git:gitg /home/git/.gitolite/hooks/common/post-receive
+
+
+As gitlab:
+----------
+    bundle exec rake gitlab:app:status RAILS_ENV=production
+    
+    # OUTPUT EXAMPLE
+    Starting diagnostic
+    config/database.yml............exists
+    config/gitlab.yml............exists
+    /home/git/repositories/............exists
+    /home/git/repositories/ is writable?............YES
+    remote: Counting objects: 603, done.
+    remote: Compressing objects: 100% (466/466), done.
+    remote: Total 603 (delta 174), reused 0 (delta 0)
+    Receiving objects: 100% (603/603), 53.29 KiB, done.
+    Resolving deltas: 100% (174/174), done.
+    Can clone gitolite-admin?............YES
+    UMASK for .gitolite.rc is 0007? ............YES
+    /home/git/share/gitolite/hooks/common/post-receive exists? ............YES
+    
+    
+    bundle exec rails s -e production -d
+
+As whoever:
+-----------
+Go to http://localhost:3000 and celebrate when you see the Gitlab login screen!
+The default login is admin@local.host password 5iveL!fe. 
+

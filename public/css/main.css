@@ -21,6 +21,12 @@ hr {
   border-bottom: 1px solid white;
 }
 
+blockquote {
+  border-left: 4px solid #DDD;
+  padding: 0 15px;
+  color: #777;
+}
+
 #site-header h1 {
   font-size: 30px;
   font-weight: 300;
