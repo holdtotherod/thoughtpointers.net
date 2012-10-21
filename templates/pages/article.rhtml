@@ -1,16 +1,30 @@
-<article class="post">
-  <header>
-    <h1><%= title %></h1>
-    <span class="date"><%= date %></span>
-  </header>
+<!-- post -->
+<article class="post single">
 
-  <section class="content">
-    <%= body %>
-  </section>
+  <!-- primary -->
+  <div class="primary">
 
+      <h2><%= title %></h2>
+
+      <section class="content">
+        <%= body %>
+      </section>
+
+  <!-- /primary -->
+  </div>
+
+  <aside>
+    <% article_date = DateTime.parse(date) %>
+    <p class="dateinfo"><%= article_date.strftime('%^b') %><span><%= article_date.strftime('%d') %></span></p>          
+  </aside>
+
+<!-- /post -->
+</article>
+
+<div class="post-bottom-section">
   <section class="comments">
     <% if @config[:disqus] %>
-        <div id="disqus_thread"></div>
+        <div id="disqus_thread"  style="padding-right: 10px;"></div>
         <script type="text/javascript">
             (function() {
                 var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
@@ -22,5 +36,6 @@
         <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
     <% end %>
   </section>
-</article>
+</div>
+
 

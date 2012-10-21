@@ -1,28 +1,121 @@
-<!doctype html>
-<html>
-  <head>
-    <link rel="stylesheet" type="text/css" href="/css/main.css">
-    <link rel="alternate" type="application/atom+xml" title="<%= title %> - feed" href="/index.xml" />
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/> 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %></title>
-  </head>
-  <body>
-    <div id="container">
-      <section>
-        <div id="site-header">
-          <h1><a href="/index.html">Thought Pointers</a></h1>
-          <br>
-          <h4>So things aren't lost in memory.</h4>
-          <hr>
-        </div>
-      </section>
-      <section>
-        <%= yield %> 
-      </section>
-      <footer>
-      </footer>
-    </div>
-  </body>
-</html>
+<!DOCTYPE html>
+<!--[if IE 7 ]>    <html class="ie7 oldie"> <![endif]-->
+<!--[if IE 8 ]>    <html class="ie8 oldie"> <![endif]-->
+<!--[if IE 9 ]>    <html class="ie9"> <![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!--> <html> <!--<![endif]-->
 
+<head>
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+    <meta charset="utf-8"/>
+    <meta name="description" content="Thought Pointers. So things aren't lost in memory.">
+    <meta name="author" content="Stephen Lottermoser">
+
+    <title>Thought Pointers</title>
+
+    <link rel="stylesheet" type="text/css" media="screen" href="/css/coolblue.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/css/main.css" />
+
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js"></script>
+    <script>window.jQuery || document.write('<script src="/js/jquery-1.8.2.min.js"><\/script>')</script>
+
+    <script src="/js/scrollToTop.js"></script>
+
+</head>
+
+<body id="top">
+
+<!--header -->
+<div id="header-wrap"><header>
+
+    <hgroup>
+        <h1><a href="/index.html">Thought Pointers</a></h1>
+        <h3>So things aren't lost in memory.</h3>
+    </hgroup>
+
+    <nav>
+    <ul>
+      <li id="current"><a href="/index.html">Home</a><span></span></li>
+      <li><a href="/archives.html">Archives</a><span></span></li>
+      <!-- <li><a href="index.html">About</a><span></span></li> -->
+    </ul>
+  </nav>
+
+<!--/header-->
+</header></div>
+  
+<!-- content-wrap -->
+<div id="content-wrap">
+
+    <!-- content -->
+    <div id="content" class="clearfix">
+
+        <!-- main -->
+        <div id="main">
+
+          <section>
+          <%= yield %> 
+        </section>
+
+        <!-- /main -->
+        </div>
+
+        <!-- sidebar -->
+    <div id="sidebar">
+
+            <div class="about-me">
+
+              <!-- <h3>About Me</h3> -->
+
+                <p>
+            <img src="http://www.gravatar.com/avatar/b3e010fcc01c32df76263e4667a78e0a.png" width="42" height="42" alt="firefox" class="align-left" />
+                Hi, I'm Stephen! I work at my favorite fruit company, working on awesome iOS apps. I'm also a husband and soon to be a father. I love to cycle, hack, and eat!
+          </p>
+
+            </div>
+
+      <div class="sidemenu">
+
+        <h3>Social Networks</h3>
+                <ul>
+          <li><a href="https://twitter.com/holdtotherod">Twitter</a></li>
+          <li><a href="https://github.com/holdtotherod">Github</a></li>
+          <li><a href="http://www.linkedin.com/in/slottermoser">LinkedIn</a></li>
+        </ul>
+
+      </div>
+
+
+
+    <!-- /sidebar -->
+    </div>
+
+    <!-- content -->
+  </div>
+
+<!-- /content-out -->
+</div>
+
+<!-- footer -->
+<footer>
+
+  <p class="footer-left">
+    &copy; 2012 Stephen Lottermoser &nbsp; &nbsp; &nbsp;
+    Design by <a href="http://www.styleshout.com/">styleshout</a>
+  </p>
+
+  <p class="footer-right">
+      <a href="/index.html">Home</a> |
+    <!-- <a href="index.html">RSS Feed</a> | -->
+        <a href="#top" class="back-to-top">Back to Top</a>
+    </p>
+
+<!-- /footer -->
+</footer>
+
+</body>
+</html>
