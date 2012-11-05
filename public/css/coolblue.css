@@ -63,7 +63,7 @@ html {
 body {
 	font: 15px/24px helvetica, arial, freesans, clean, sans-serif;
 	color: #454545;
-   	background: url(../images/bg.png);
+   	background: url(../images/coolblue/bg.png);
 }
 /* Links */
 a:link, a:visited {
@@ -154,7 +154,7 @@ blockquote {
   	margin: 12px 0;
   	padding: 40px 30px 20px 70px;
   	border: 1px solid #E4E6E9;
-	background: #F3F4F5 url(../images/quote.png) no-repeat 20px 32px;
+	background: #F3F4F5 url(../images/coolblue/quote.png) no-repeat 20px 32px;
   	font-size: 18px;
   	line-height: 28px;
   	font-style: italic;
@@ -201,10 +201,11 @@ strong, b {
 }
 
 /* Images */
-img {
+
+.bordered-image {
     background: #F3F4F5;
     border: 1px solid #DEDFE0;
-	padding: 15px;
+    padding: 15px;
 
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
@@ -349,7 +350,7 @@ form input.button {
     float: left;
     height: 200px;
     width: 100%;
-    background: url(../images/header-bg.png) repeat-x;
+    background: url(../images/coolblue/header-bg.png) repeat-x;
 }
 header {
     position: relative;
@@ -359,14 +360,14 @@ header {
 #content-wrap {
     margin: 0;
     padding: 0;
-    background: url(../images/content.png);
+    background: url(../images/coolblue/content.png);
     width: 100%;
 }
 #content {
     width: 978px;
     margin: 0 auto;
     padding: 0 0 24px 0;
-    background: url(../images/content-bg.png) repeat-y left top;
+    background: url(../images/coolblue/content-bg.png) repeat-y left top;
 }
 #main {
 	float: left;
@@ -416,7 +417,7 @@ footer {
     font-size: 11px;
 	color: #C2DBE7;
     overflow: hidden;
-    background: url(../images/footer-line.png) repeat-x left top;
+    background: url(../images/coolblue/footer-line.png) repeat-x left top;
 }
 
 /* --------------------------------------------------------------------------
@@ -483,7 +484,7 @@ header nav ul li#current a {
 header nav ul li#current span {
     position: absolute;
     display: block;
-    background: url(../images/selected.png) no-repeat 50% 0;
+    background: url(../images/coolblue/selected.png) no-repeat 50% 0;
     bottom: -9px;
     height: 10px;
     width: 100%;
@@ -500,7 +501,7 @@ header div.subscribe {
     height: 30px;
     color: #BEBEBE;
     text-shadow: 0 -1px 0 rgba(10, 10, 10, 1);
-    background: url(../images/rss32.png) no-repeat 0 center;
+    background: url(../images/coolblue/rss32.png) no-repeat 0 center;
     padding-left: 28px;
     right: 68px;
     top: 18px;
@@ -558,7 +559,7 @@ header .search button.btn {
   	height: 38px;
   	cursor: pointer;
   	text-indent: -9999px;
-  	background: url(../images/search.png) no-repeat center center;
+  	background: url(../images/coolblue/search.png) no-repeat center center;
 }
 
 /* -------------------------------------------------------------------------
@@ -661,7 +662,7 @@ header .search button.btn {
 	padding: 0 0 15px 0;
     margin: 0 0 36px 0;
     width: 100%;
-    background: url(../images/footer-line.png) repeat-x left bottom;
+    background: url(../images/coolblue/footer-line.png) repeat-x left bottom;
 }
 #extra #gallery h3 {
     float: left;
@@ -692,7 +693,7 @@ header .search button.btn {
 .recent-comments ul {
    	margin-left: 0;
     padding: 0;
-	background: url(../images/footer-line.png) repeat-x left top;
+	background: url(../images/coolblue/footer-line.png) repeat-x left top;
     font-family: 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', Verdana, sans-serif;
 }
 .recent-comments ul li {
@@ -700,7 +701,7 @@ header .search button.btn {
 	font-size: 12px;
 	line-height: 1.5em;
 	padding: 7px 5px 7px 22px;
-	background: url(../images/speech-bubble.png)  no-repeat  2px 12px;
+	background: url(../images/coolblue/speech-bubble.png)  no-repeat  2px 12px;
     /* border-bottom: 1px solid #326B8D; */
 }
 .recent-comments ul li a:link,
@@ -714,7 +715,7 @@ header .search button.btn {
 
 /* footer-list */
 .footer-list ul {
-	background: url(../images/footer-line.png) repeat-x left top;
+	background: url(../images/coolblue/footer-line.png) repeat-x left top;
 	list-style: none;
 	padding: 0;
 	margin-left: 0;
@@ -761,7 +762,7 @@ footer a:hover {
     color: #99CCFF;
 }
 footer a.back-to-top {
-    background: url(../images/back-to-top.png) no-repeat right 2px;
+    background: url(../images/coolblue/back-to-top.png) no-repeat right 2px;
     font-weight: bold;
     padding-right: 16px;
 }
@@ -813,7 +814,7 @@ aside {
 
 /* Date Info */
 aside p.dateinfo {
-    background: url(../images/date-bg.png) no-repeat;
+    background: url(../images/coolblue/date-bg.png) no-repeat;
     height: 70px;
     width: 60px;
     margin: 10px 0 0 78px;
@@ -863,11 +864,11 @@ aside .post-meta ul li {
     border-bottom: 1px solid #E5E5E5;
 }
 
-aside .post-meta ul.tags li { background: url(../images/tag.png) no-repeat 2px center; }
-aside .post-meta ul li.user { background: url(../images/user.png) no-repeat 2px center; }
-aside .post-meta ul li.time { background: url(../images/clock.png) no-repeat 2px center; }
-aside .post-meta ul li.comment { background: url(../images/comment.png) no-repeat 2px center; }
-aside .post-meta ul li.permalink { background: url(../images/permalink.png) no-repeat 2px center; }
+aside .post-meta ul.tags li { background: url(../images/coolblue/tag.png) no-repeat 2px center; }
+aside .post-meta ul li.user { background: url(../images/coolblue/user.png) no-repeat 2px center; }
+aside .post-meta ul li.time { background: url(../images/coolblue/clock.png) no-repeat 2px center; }
+aside .post-meta ul li.comment { background: url(../images/coolblue/comment.png) no-repeat 2px center; }
+aside .post-meta ul li.permalink { background: url(../images/coolblue/permalink.png) no-repeat 2px center; }
 
 aside .post-meta ul li a {
     font-family: 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', Verdana, Sans-Serif;
