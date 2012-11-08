@@ -175,10 +175,7 @@ code {
     line-height: 1.5em;
 }
 pre {
-    white-space: pre;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-
+    overflow-x: scroll;
     margin: 0 0 24px 0;
   	padding: 0 25px;
   	display: block;
