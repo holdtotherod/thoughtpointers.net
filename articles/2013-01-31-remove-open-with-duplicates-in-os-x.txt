@@ -2,9 +2,9 @@
 title: Remove 'Open With' Duplicates in OS X
 date: 31/01/2013
 
-Frustrated by Pixelmator.app appearing in your Open With Menu five times? Does your Open With Menu look anything like this?
+Frustrated by Pixelmator.app appearing in Finder's Open With menu five times? Does your Open With menu look anything like this?
 
-![Open With Duplicates](http://f.cl.ly/items/3S1K0U0x1t183s1Z0D2C/Screen%20Shot%202013-01-31%20at%209.39.32%20AM.png)
+![Open With Duplicates](/images/finder-open-with-duplicates.png)
 
 Time to rebuild the launch services database:
 
@@ -17,5 +17,4 @@ For OS X 10.3 - 10.4
 	/System/Library/Frameworks/ApplicationServices.framework/\Frameworks/LaunchServices.framework/Support/lsregister \-kill -r -domain local -domain system -domain user
 
 Source: [macs.about.com](http://macs.about.com/od/usingyourmac/qt/remove-duplicate-applications-from-open-with.htm)<br>
-Credit: [zwily](https://github.com/zwily), [marks](https://github.com/marksuman)
-
+Credit: [zwily](https://twitter.com/zwily), [marksuman](https://twitter.com/marksuman)
