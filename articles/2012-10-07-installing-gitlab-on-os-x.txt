@@ -30,7 +30,7 @@ Run the following in terminal:
     brew install icu4c # -> for gitlab dependency
     brew install redis # -> another gitlab dependency
     brew install mysql # -> I didn't want to use sqlite. Setup to start at launch, set root pass.
-    mysql.start
+    mysql.server start
     
     # More gitlab dependencies
     sudo easy_install pip
@@ -54,15 +54,13 @@ As git:
 As admin:
 ---------
     sudo cp /Users/gitlab/.ssh/id_rsa.pub /Users/git/gitlab.pub
-    sudo chmod 0444 /home/git/gitlab.pub
+    sudo chmod 0444 /Users/git/gitlab.pub
 
 As git:
 -------
     gitolite setup -pk ~/gitlab.pub
 
-    vim ~/.gitolite.rc
-    # :%s/0077/0007/g
-    # :wq
+    sed -i "" "s/0077/0007/g" ~/.gitolite.rc
 
 As admin:
 ---------
@@ -76,7 +74,7 @@ As gitlab:
     git clone git@localhost:gitolite-admin.git gitolite-admin
 
     # if it succeeded you can remove it
-    sudo rm -rf gitolite-admin
+    rm -rf gitolite-admin
 
     gem install charlock_holmes --version '0.6.8' # Resulted in a lot of ASCII conversion errors/warnings
     gem install bundler
@@ -84,9 +82,7 @@ As gitlab:
     git clone -b stable https://github.com/gitlabhq/gitlabhq.git gitlab
     cd gitlab
     cp config/gitlab.yml.example config/gitlab.yml
-    vim config/gitlab.yml
-    # :%s/\/home\//\/Users\//g
-    # :wq
+    sed -i "" "s/\/home\//\/Users\//g" config/gitlab.yml
     
     # Login to MySQL
     $ mysql -u root -p
@@ -104,15 +100,15 @@ As gitlab:
     cp config/database.yml.mysql config/database.yml
 
 Edit the database.yml file and fill in the necessary mysql login details.
-
+    
 
     bundle install --without development test --deployment
     bundle exec rake gitlab:app:setup RAILS_ENV=production
 
 As Admin:
 ---------
-    sudo cp /Users/stephen/lib/hooks/post-receive /Users/git/.gitolite/hooks/common/post-receive
-    sudo chown git:gitg /home/git/.gitolite/hooks/common/post-receive
+    sudo cp /Users/gitlab/gitlab/lib/hooks/post-receive /Users/git/.gitolite/hooks/common/post-receive
+    sudo chown git:gitg /Users/git/.gitolite/hooks/common/post-receive
 
 
 As gitlab:
