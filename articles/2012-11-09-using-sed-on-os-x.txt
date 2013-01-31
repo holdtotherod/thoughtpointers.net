@@ -1,0 +1,16 @@
+---
+title: Using sed on OS X
+date: 09/11/2012
+
+Whenever I try to use sed on OS X, I get frustrated. Mostly because I haven't taken the time to learn sed, but it never seems to work for me, even when I copy a command straight from a tutorial. Turns out my problem was usually related to a quirk in the OS X version of sed. This is the error that always gets me:
+
+	$ grep -rl "foo" . | xargs sed -i 's/foo/bar/g'
+	sed: 1: "./foo_file ...": invalid command code .
+
+What the heck? Checking the man pages on the -i argument for sed revealed the problem. The `sed` command is looking for an argument with the `-i` option, whether that's something like `-i .bak` or a zero-length argument. A zero-length argument? In OS X, that doesn't mean specifying nothing like my above example. No, you have to explicitly provide a zero-length argument. Turns out passing `""` does the trick.
+
+	$ grep -rl "foo" . | xargs sed -i "" 's/foo/bar/g'
+
+Now I can probably go update my [Installing Gitlab on OS X](/2012/10/07/installing-gitlab-on-os-x/) guide and fix the step using sed I had a problem with from GitlabHQ's guide.
+
+Thanks [Tommy Xu](http://dev.totodotnet.net/post/17360058466/using-sed-command-in-mac-os-x) for solving my problem.
