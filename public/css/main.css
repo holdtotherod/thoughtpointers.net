@@ -3,3 +3,22 @@
 	font-size: 20px;
     line-height: 28px;
 }
+
+#logo-cloud {
+	position: absolute;
+	top: -31px;
+	left: 287px;
+	width: 59px;
+}
+
+.free-image {
+	background: transparent;
+	border: none;
+	padding: 0px;
+	-moz-border-radius: 0px;
+	-webkit-border-radius: 0px;
+	border-radius: 0px;
+	box-shadow: none;
+	-moz-box-shadow: none;
+	-webkit-box-shadow: none;
+}
