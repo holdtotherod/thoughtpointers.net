@@ -1,0 +1,57 @@
+---
+title: Using tkellem with LimeChat
+date: 04/10/2012
+
+# Using tkellem with LimeChat
+
+While I worked at [Instructure](http://instructure.com), I got hooked on irc. It's used by the whole company for everything from keeping in communication with everyone, sharing knowledge, viewing build reports, controlling a talking panda, and more. After I joined Apple, I immediately began missing some of the culture there and the tools we used, like irc. So I convinced my team to use Apple's internal irc, but I was in need of a good irc bouncer to get be able to get backlogs from the irc channel for all the times my work machine wasn't connected to the network. But what irc bouncer should I use? I wanted something light-weight and simple to use.
+
+The answer to my problem was [tkellem](https://github.com/codekitchen/tkellem), developed by Instructure's own Brian Palmer. It's a simple ruby gem that's still in early alpha phase, but it looked easy to set up and would do exactly what I wanted. So I decided to give it a shot. The only thing I wasn't sure of was how to get [Limechat](http://itunes.apple.com/us/app/limechat-irc-client/id298766460?mt=8) to use my tkellem bouncer. Here's how it's done:
+
+## On your always on, accessible server:
+    $ gem install tkellem
+    $ tkellem start
+    $ tkellem admin
+    > listen ircs://0.0.0.0:8765
+    > user <my-name> --role=admin
+    > password --user=<my-name> <my-new-password>
+
+## In Limechat
+
+### Connect to tkellem to point it to your destination irc server
+
+1. Add Server. Fill in the following:
+    - Network name: `tkellem admin - tkellum-server.fqdn`
+    - Server: `tkellum-server.fqdn`
+    - Port: `8765`
+    - Check the `SSL Connection` box
+    - Server password: `<my-new-password>`
+    - Nickname: `<my-nick>`
+    - Login: `<my-name>`
+    - Real name: `<my-real-name>`
+
+2. Click OK to close the Add Server dialogue.
+3. Right-click the server in your servers list and click Connect
+4. In the server or in the -tkellem channel, type the following:
+
+        setting allow_user_networks true
+        network --public --name=<destination-irc-server-short-name> ircs://<destination-irc-server>:6667
+
+    Set the `<destination-irc-server>` to the desired irc server url you want tkellem to bounce for you. Set the `<destination-irc-server-short-name>` to be the nickname you want use to refer to this proxy connection.
+
+### Reconnect to tkellem to start receiving backlogs
+
+1. Add another Server. Fill in the following:
+    - Network name: `<destination-irc-server>`
+    - Server: `tkellum-server.fqdn`
+    - Port: `8765`
+    - Check the `SSL Connection` box
+    - Server password: `<my-new-password>`
+    - Nickname: `<my-nick>`
+    - Login: `<my-name>@<destination-irc-server-short-name>`
+    - Real name: `<my-real-name>`
+
+2. Click OK to close the dialogue, then right-click on the server and click Connect.
+3. Tkellem is now bouncing for you!
+4. You can probably remove your <tkellem admin - tkellum-server.fqdn> server now since you can still do all your tkellem commands in the -tkellem channel, like `setting allow_user_networks false`
+
