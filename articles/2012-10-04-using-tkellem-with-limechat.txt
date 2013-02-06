@@ -2,8 +2,6 @@
 title: Using tkellem with LimeChat
 date: 04/10/2012
 
-# Using tkellem with LimeChat
-
 While I worked at [Instructure](http://instructure.com), I got hooked on irc. It's used by the whole company for everything from keeping in communication with everyone, sharing knowledge, viewing build reports, controlling a talking panda, and more. After I joined Apple, I immediately began missing some of the culture there and the tools we used, like irc. So I convinced my team to use Apple's internal irc, but I was in need of a good irc bouncer to get be able to get backlogs from the irc channel for all the times my work machine wasn't connected to the network. But what irc bouncer should I use? I wanted something light-weight and simple to use.
 
 The answer to my problem was [tkellem](https://github.com/codekitchen/tkellem), developed by Instructure's own Brian Palmer. It's a simple ruby gem that's still in early alpha phase, but it looked easy to set up and would do exactly what I wanted. So I decided to give it a shot. The only thing I wasn't sure of was how to get [Limechat](http://itunes.apple.com/us/app/limechat-irc-client/id298766460?mt=8) to use my tkellem bouncer. Here's how it's done:
