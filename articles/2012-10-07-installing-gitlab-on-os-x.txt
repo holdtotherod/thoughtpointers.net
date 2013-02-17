@@ -1,8 +1,10 @@
 ---
-title: Installing Gitlab on OS X
-date: 07/10/2012
+title: Installing GitLab on OS X Rev2
+date: 15/02/2013
 
-So it turns out enterprise Github is really expensive, something like $250 per person. My company abolutely refuses to have their code hosted somewhere external, so we're not able to use this amazing tool. In search of something comparable, we found [Gitlab](http://gitlabhq.com/), which basically seems like a dumbed-down open-source version of Github you can host yourself. It's pretty cool, but it lacks repo forking, gists, and public repos are not supported out of the box. You have to add some [patches](http://shanetully.com/2012/08/gitlab-internally-public-projects/) to kind of hack them into Gitlab.
+Note: This is version 2 of my original article on installing GitLab on OS X. Turns out that article was fairly popular, but there were some things about my first run installation that bothered me. Here's a second attempt at a better, clean installation. These instructions were run installing GitLab 4.1; my old instructions were run installing GitLab 3.0. If you want the old version of the instructions, you can find it on [GitHub](https://github.com/holdtotherod/thoughtpointers.net/blob/f356ce07c36814ff5e28842878d32446368e4b6a/articles/2012-10-07-installing-gitlab-on-os-x.txt).
+
+So it turns out enterprise Github is really expensive, something like $250 per person. My company abolutely refuses to have their code hosted somewhere external, so we're not able to use this amazing tool. In search of something comparable, we found [Gitlab](http://gitlabhq.com/), which basically seems like a dumbed-down open-source version of Github you can host yourself. It's pretty cool, but it lacks repo forking. Instead of a fork and pull model it uses the merge request model, but it works well for internal projects. Gists ("Snippets") are project specific (which is kind of cool since private projects have gists the team can see, but not everyone else), and can be set to automatically expire and delete.
 
 Lastly, the setup instructions are for Debian systems. From the install doc:
 
@@ -11,130 +13,305 @@ Lastly, the setup instructions are for Debian systems. From the install doc:
 >    - MacOS X
 >    - FreeBSD
 
-Sounds like a challenge! After spending some time translating user/group management to OS X language, and using brew in place of apt-get, I finally got it working on the Mac Pro sitting in our cube. I even wrote down all the steps I took in a Gist on Github. Right when I finished and was about to publish the Gist, Safari crashed :/ I was very angry. I did my best to recover the steps, but until I go through the process again, I can't gaurantee I didn't miss something.
+Sounds like a challenge! After spending some time translating user/group management to OS X language, and using brew in place of apt-get, I finally got it working on the Mac Pro sitting in our cube. 
 
-System: OS X 10.7.5, Xcode: 4.5
+System: OS X 10.7.5, Xcode: 4.6
 
-As admin:
----------
+System Users
+------------
 
-In System Preferences, setup users git and gitlab as standard users. Setup a group called gitg (meaning git group) and add git and gitlab to it. Make sure they have Remote Login access in Sharing.
+Unfortunately, this is not as easy as `sudo adduser git` like in linux. OS X really wants you to use the graphical tool, but you can use the command-line tool `dscl` instead. Thanks to James Mead for help from his [blog](http://jamesmead.org/blog/2011-01-20-adding-a-user-in-osx-on-command-line), as well as Joe Turner for updated instructions on his [blog](http://joe-turner.net/2012/05/25/how-to-add-a-user-from-the-os-x-command-line-works-with-lion/).
 
-Run the following in terminal:
+1. Create the `git` group for use by Gitolite and GitLab
+    
+    List existing group ID's in numerical order to choose a number not listed to use for the new group.
+    
+        dscl . -list /Groups PrimaryGroupID | awk '{print $2}' | sort -n
+        
+    I chose to use `1000`. Create the group and assign it the primary group ID.
+            
+        sudo dscl . -create /Groups/git
+        sudo dscl . -create /Groups/git PrimaryGroupID 1000
+            
+2. Create a the `git` user for Gitolite.
+    
+    List the existing user ID's and select to choose a number not listed to use for the new user.
+        
+        dscl . -list /Users UniqueID | awk '{print $2}' | sort -n
+            
+    Create the `git` user and assign the shell, real name, user ID, and group ID. The group ID should be the ID of the git group you created above.
+        
+        sudo dscl . -create /Users/git
+        sudo dscl . -create /Users/git UserShell /bin/bash
+        sudo dscl . -create /Users/git UniqueID "503"
+        sudo dscl . -create /Users/git PrimaryGroupID 1000
+        sudo dscl . -create /Users/git NFSHomeDirectory /Users/git
+        
+        sudo mkdir /Users/git
+        sudo chown -R git:git /Users/git
+            
+            
+3. Create a `gitlab` user for GitLab.
+        
+    List the existing user ID's and select to choose a number not listed to use for the new user.
+        
+        dscl . -list /Users UniqueID | awk '{print $2}' | sort -n
+            
+    Create the `gitlab` user and assign the shell, real name, user ID, and group ID. The group ID should be the ID of the git group you created above.
+        
+        sudo dscl . -create /Users/gitlab
+        sudo dscl . -create /Users/gitlab UserShell /bin/bash
+        sudo dscl . -create /Users/gitlab UniqueID "504"
+        sudo dscl . -create /Users/gitlab PrimaryGroupID 1000
+        sudo dscl . -create /Users/gitlab NFSHomeDirectory /Users/gitlab
+        
+        sudo mkdir /Users/gitlab
+        sudo chown -R gitlab:git /Users/gitlab
+        
+4. Hide the `git` and `gitlab` users from the OS X login window:
+
+        sudo defaults write /Library/Preferences/com.apple.loginwindow HiddenUsersList -array-add git gitlab
+        
+    If you ever wanted to show them again, use the following command:
+    
+        sudo defaults delete /Library/Preferences/com.apple.loginwindow HiddenUsersList
+        
+    Note that you'll need to set a valid password for each user if you actually want to login as them (though I would recommend against directly logging in as either user).
+    
+        sudo dscl . –passwd /Users/git PASSWORD
+        sudo dscl . –passwd /Users/gitlab PASSWORD
+            
+Some installation prerequisites
+-------------------------------
+
+Get brew into tip-top shape:
 
     brew update
     brew --config # I had just updated Xcode, so need brew to configure itself again
     brew doctor # -> Your system is raring to brew!
     
-    brew install libksba # -> for ruby 1.9.3 dependency
-    brew install icu4c # -> for gitlab dependency
-    brew install redis # -> another gitlab dependency
-    brew install mysql # -> I didn't want to use sqlite. Setup to start at launch, set root pass.
+Install some GitLab dependencies. Follow caveats from redis installation to have redis start on boot.
+
+    brew install icu4c   
+    brew install redis
+
+I didn't want to use sqlite. Setup to start at launch, set root pass.
+
+    brew install mysql
     mysql.server start
     
-    # More gitlab dependencies
+GitLab requires python 2.5+ (python 3.x not supported)
+
+    python --version # Confirm python 2.5+. OS X 10.7.5 has 2.7.1
+    sudo ln -s /usr/bin/python /usr/bin/python2 #GitLab looks for python2
+    
+More GitLab dependencies
+
     sudo easy_install pip
     sudo pip install pygments
 
-As gitlab:
-----------
-    curl -L https://get.rvm.io | bash -s stable
-    rvm install 1.9.3
+Install Ruby
+------------
 
-    ssh-keygen -q -N '' -t rsa -f ~/.ssh/id_rsa
+Install Ruby 1.9.3 with rbenv and Homebrew. I switched from using rvm to rbenv, so hopefully I didn't miss any ruby build dependencies. If I did, let me know. Homebrew should be able to install anything missing.
 
-As git:
--------
-    git clone -b gl-v304 https://github.com/gitlabhq/gitolite.git gitolite
-    mkdir bin
-    echo -e "PATH=~/bin:\$PATH" >> ~/.profile
-    source ~/.profile
-    gitolite/install -ln ~/bin
+    brew install rbenv # Follow the caveats for your user
+    brew install ruby-build
+    brew install apple-gcc42
+    sudo -u gitlab -H -i CC=gcc-4.2 rbenv install 1.9.3-p385
+    sudo -u gitlab -H -i 'rbenv local 1.9.3-p385'
+    
+Install ruby 1.9.3 for your user too and set rbenv to use it. This is for installing global gems later.
 
-As admin:
----------
+    CC=gcc-4.2 rbenv install 1.9.3-p385
+    rbenv local 1.9.3-p385 # I always want 1.9.3 to be used by my user
+        
+Install Gitolite
+----------------
+
+Download and Installation.
+
+    sudo -u git -H sh -c 'git clone -b gl-v320 https://github.com/gitlabhq/gitolite.git ~/gitolite'
+    sudo -u git -H sh -c 'mkdir ~/bin'
+    sudo -u git -H sh -c 'printf "%b\n%b\n" "PATH=\$PATH:~/bin" "export PATH" >> ~/.profile'
+    sudo -u git -H sh -c '~/gitolite/install -ln ~/bin'
+
+Setup SSH keys for the gitlab user.
+
+    sudo -u gitlab -H ssh-keygen -q -N '' -t rsa -f /Users/gitlab/.ssh/id_rsa
     sudo cp /Users/gitlab/.ssh/id_rsa.pub /Users/git/gitlab.pub
     sudo chmod 0444 /Users/git/gitlab.pub
 
-As git:
--------
-    gitolite setup -pk ~/gitlab.pub
+Finish configuration.
 
-    sed -i "" "s/0077/0007/g" ~/.gitolite.rc
+    sudo -u git -H sh -c '~/bin/gitolite setup -pk ~/gitlab.pub'
+    sudo chmod 750 /Users/git/.gitolite/
+    sudo chown -R git:git /Users/git/.gitolite/
+    sudo chmod -R ug+rwXs,o-rwx /Users/git/repositories/
+    sudo chown -R git:git /Users/git/repositories/
 
-As admin:
----------
-    sudo chmod -R g+rwX /Users/git/repositories/
-    sudo chown -R git:gitg /Users/git/repositories/
-
-As gitlab:
-----------
-    # clone admin repo to add localhost to known_hosts
-    # & be sure your user has access to gitolite
-    git clone git@localhost:gitolite-admin.git gitolite-admin
-
-    # if it succeeded you can remove it
-    rm -rf gitolite-admin
-
-    gem install charlock_holmes --version '0.6.8' # Resulted in a lot of ASCII conversion errors/warnings
-    gem install bundler
-
-    git clone -b stable https://github.com/gitlabhq/gitlabhq.git gitlab
-    cd gitlab
-    cp config/gitlab.yml.example config/gitlab.yml
-    sed -i "" "s/\/home\//\/Users\//g" config/gitlab.yml
+Clone admin repo to add localhost to known_hosts and make sure your user has access to gitolite. If it succeeded you can remove it.
     
-    # Login to MySQL
-    $ mysql -u root -p
+    sudo -u gitlab -H sh -c 'git clone git@localhost:gitolite-admin.git ~/gitolite-admin'
+    ls /Users/gitlab/gitolite-admin # Was it there?
+    sudo rm -rf /Users/gitlab/gitolite-admin/ #OK, remove it.
+    
+Add domains to SSH known hosts file
 
-    # Create the GitLab production database
+    sudo -u gitlab -H ssh git@localhost
+    sudo -u gitlab -H ssh git@YOUR_DOMAIN_NAME
+    
+Don't worry if you see an error like `PTY allocation request failed on channel 0`. Congratulations! Gitolite is now setup. Too bad GitLab is dropping Gitolite as of 5.0.
+
+Installing GitLab
+-----------------
+
+### 1. Checkout repo and configure
+
+    cd /Users/gitlab
+    sudo -u gitlab -H git clone https://github.com/gitlabhq/gitlabhq.git gitlab
+    cd gitlab
+    sudo -u gitlab -H git checkout 4-1-stable
+    
+Copy the example GitLab config
+
+    sudo -u gitlab -H cp config/gitlab.yml.example config/gitlab.yml
+    
+Make sure to change "localhost" to the fully-qualified domain name of your host serving GitLab where necessary
+
+    sudo -u gitlab -H vim config/gitlab.yml
+    
+Fix config file to use `/Users` instead of `/home`
+
+    sudo -u gitlab sed -i "" "s/\/home\//\/Users\//g" config/gitlab.yml
+    
+Make sure GitLab can write to the `log/` and `tmp/` directories
+
+    sudo chown -R gitlab log/
+    sudo chown -R gitlab tmp/
+    sudo chmod -R u+rwX  log/
+    sudo chmod -R u+rwX  tmp/
+    
+Make directory for satellites
+
+    sudo -u gitlab -H mkdir /Users/gitlab/gitlab-satellites
+    
+Copy the example Unicorn config
+
+    sudo -u gitlab -H cp config/unicorn.rb.example config/unicorn.rb
+    
+Fix unicorn file to use `/Users` instead of `/home`
+
+    sudo -u gitlab sed -i "" "s/\/home\//\/Users\//g" config/unicorn.rb
+    
+### 2. Prepare database
+
+Login to MySQL
+
+    mysql -u root -p
+    
+Create the GitLab production database
+
     mysql> CREATE DATABASE IF NOT EXISTS `gitlabhq_production` DEFAULT CHARACTER SET `utf8` COLLATE `utf8_unicode_ci`;
+    
+Create the MySQL User change $password to a real password
 
-    # Create the MySQL User change $password to a real password
     mysql> CREATE USER 'gitlab'@'localhost' IDENTIFIED BY '$password';
     
-    # Grant proper permissions to the MySQL User
+Grant proper permissions to the MySQL User
+
     mysql> GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER ON `gitlabhq_production`.* TO 'gitlab'@'localhost';
     
-    # Exit MySQL Server and copy the example config, make sure to update username/password in config/database.yml
+Exit MySQL Server and copy the example config, make sure to update username/password in config/database.yml
+
     cp config/database.yml.mysql config/database.yml
+    sudo -u gitlab -H vim config/database.yml
+    
+### 3. Install gems
 
-Edit the database.yml file and fill in the necessary mysql login details.
+    sudo gem install charlock_holmes --version '0.6.9'
+    sudo gem install bundle
+    rbenv rehash
+    
+    sudo -u gitlab -H sh -c 'bundle install --deployment --without development test postgres'
+    
+### 4. Setup Git
+
+GitLab needs to be able to commit and push changes to Gitolite. In order to do that Git requires a username and email. Use the same address used for the email.from setting in `config/gitlab.yml`.
+
+    sudo -u gitlab -H git config --global user.name "GitLab"
+    sudo -u gitlab -H git config --global user.email "gitlab@localhost"
+
+### 5. Setup GitLab hooks
+
+    sudo cp ./lib/hooks/post-receive /Users/git/.gitolite/hooks/common/post-receive
+    sudo chown git:git /Users/git/.gitolite/hooks/common/post-receive
+    
+### 6. Initialize database and activate advanced features
+
+    sudo -u gitlab -H bundle exec rake gitlab:setup RAILS_ENV=production
+    
+### 7. Install Init script
+
+    sudo curl --output /etc/init.d/gitlab https://raw.github.com/gitlabhq/gitlab-recipes/4-1-stable/init.d/gitlab
+    sudo chmod +x /etc/init.d/gitlab
+    sudo sed -i "" "s/\/home\//\/Users\//g" /etc/init.d/gitlab
+    sudo /etc/init.d/gitlab start
+
+### 8. Check Installation
+
+There is a bug in 4.1 related to the GitLab check rake task. See this [post](http://stackoverflow.com/questions/14733997/gitlab-rake-gitlabcheck-fails-on-mountain-lion-server) on StackOverflow for more info. You need to edit `lib/tasks/gitlab/task_helpers.rake` according to the following diff:
+
+    @@ -77,8 +77,7 @@ namespace :gitlab do
+       end
+ 
+       def gid_for(group_name)
+    -    group_line = File.read("/etc/group").lines.select{|l| l.start_with?("#{group_name}:")}.first
+    -    group_line.split(":")[2].to_i
+    +    Etc.getgrnam(group_name).gid
+       end
+     
+       def warn_user_is_not_gitlab
+
+Double-check environment configuration
+
+    sudo -u gitlab -H bundle exec rake gitlab:env:info RAILS_ENV=production
+    
+Do a thorough check. Make sure everything is green.
+    
+    sudo -u gitlab -H bundle exec rake gitlab:check RAILS_ENV=production
+    
+I had to start sidekiq myself because it wasn't running. Note the added `RAILS_ENV=production` variable. 
+
+    sudo -u gitlab -H bundle exec rake sidekiq:start RAILS_ENV=production
+    
+The script also complained about the init script not being up-to-date, but I assume that's because it was modified to use `/Users` instead of `/home`. You can safely ignore that warning.
+
+Nginx
+-----
+
+I chose to use the nginx/unicorn setup.
+
+    brew install nginx
+    
+Download an exmaple site config:
+
+    sudo curl --output /usr/local/etc/nginx/sites-available/gitlab https://raw.github.com/gitlabhq/gitlab-recipes/4-1-stable/nginx/gitlab
+    sudo ln -s /usr/local/etc/nginx/sites-available/gitlab /usr/local/etc/nginx/sites-enabled/gitlab
+
+
+Modify the config file to match your setup, using the FQDN and IP of the host serving GitLab:
+
+    sudo vim /usr/local/etc/nginx/sites-available/gitlab
+    sudo sed -i "" "s/\/home\//\/Users\//g" /usr/local/etc/nginx/sites-available/gitlab
+    
+Start nginx, then modify the owner of the `proxy_temp` folder. If someone can figure out the real problem/solution here, they'll get major points.
+
+    sudo nginx
+    sudo chown -R nobody:git /usr/local/var/run/nginx/proxy_temp
     
 
-    bundle install --without development test --deployment
-    bundle exec rake gitlab:app:setup RAILS_ENV=production
+Installation Complete
+---------------------
 
-As Admin:
----------
-    sudo cp /Users/gitlab/gitlab/lib/hooks/post-receive /Users/git/.gitolite/hooks/common/post-receive
-    sudo chown git:gitg /Users/git/.gitolite/hooks/common/post-receive
-
-
-As gitlab:
-----------
-    bundle exec rake gitlab:app:status RAILS_ENV=production
-    
-    # OUTPUT EXAMPLE
-    Starting diagnostic
-    config/database.yml............exists
-    config/gitlab.yml............exists
-    /home/git/repositories/............exists
-    /home/git/repositories/ is writable?............YES
-    remote: Counting objects: 603, done.
-    remote: Compressing objects: 100% (466/466), done.
-    remote: Total 603 (delta 174), reused 0 (delta 0)
-    Receiving objects: 100% (603/603), 53.29 KiB, done.
-    Resolving deltas: 100% (174/174), done.
-    Can clone gitolite-admin?............YES
-    UMASK for .gitolite.rc is 0007? ............YES
-    /home/git/share/gitolite/hooks/common/post-receive exists? ............YES
-    
-    
-    bundle exec rails s -e production -d
-
-As whoever:
------------
-Go to http://localhost:3000 and celebrate when you see the Gitlab login screen!
-The default login is admin@local.host password 5iveL!fe. 
-
+Go to http://(your FDQN) and celebrate when you see the Gitlab login screen! It may take a little bit for GitLab to load the first time because it needs to compile all of the assets (CSS, Javascript, etc). The default login is admin@local.host password 5iveL!fe. 
