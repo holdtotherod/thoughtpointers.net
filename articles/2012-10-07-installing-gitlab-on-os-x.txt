@@ -1,6 +1,6 @@
 ---
-title: Installing GitLab on OS X Rev2
-date: 15/02/2013
+title: Installing Gitlab on OS X
+date: 07/10/2012
 
 Note: This is version 2 of my original article on installing GitLab on OS X. Turns out that article was fairly popular, but there were some things about my first run installation that bothered me. Here's a second attempt at a better, clean installation. These instructions were run installing GitLab 4.1; my old instructions were run installing GitLab 3.0. If you want the old version of the instructions, you can find it on [GitHub](https://github.com/holdtotherod/thoughtpointers.net/blob/f356ce07c36814ff5e28842878d32446368e4b6a/articles/2012-10-07-installing-gitlab-on-os-x.txt).
 
