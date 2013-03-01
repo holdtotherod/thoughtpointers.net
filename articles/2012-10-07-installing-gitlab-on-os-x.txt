@@ -2,7 +2,7 @@
 title: Installing Gitlab on OS X
 date: 07/10/2012
 
-Note: This is version 2 of my original article on installing GitLab on OS X. Turns out that article was fairly popular, but there were some things about my first run installation that bothered me. Here's a second attempt at a better, clean installation. These instructions were run installing GitLab 4.1; my old instructions were run installing GitLab 3.0. If you want the old version of the instructions, you can find it on [GitHub](https://github.com/holdtotherod/thoughtpointers.net/blob/f356ce07c36814ff5e28842878d32446368e4b6a/articles/2012-10-07-installing-gitlab-on-os-x.txt).
+Note: This is version 2 of my original article on installing GitLab on OS X. Turns out that article was fairly popular, but there were some things about my first run installation that bothered me. Here's a second attempt at a better, clean installation. These instructions were run installing GitLab 4.2; my old instructions were run installing GitLab 3.0. If you want the old version of the instructions, you can find it on [GitHub](https://github.com/holdtotherod/thoughtpointers.net/blob/f356ce07c36814ff5e28842878d32446368e4b6a/articles/2012-10-07-installing-gitlab-on-os-x.txt).
 
 So it turns out enterprise Github is really expensive, something like $250 per person. My company abolutely refuses to have their code hosted somewhere external, so we're not able to use this amazing tool. In search of something comparable, we found [GitLab](http://gitlabhq.com/), which basically seems like a dumbed-down open-source version of Github you can host yourself. It's pretty cool, but it lacks repo forking. Instead of a fork and pull model it uses the merge request model, but it works well for internal projects. Gists ("Snippets") are project specific (which is kind of cool since private projects have gists the team can see, but not everyone else), and can be set to automatically expire and delete.
 
@@ -171,7 +171,7 @@ Installing GitLab
     cd /Users/gitlab
     sudo -u gitlab -H git clone https://github.com/gitlabhq/gitlabhq.git gitlab
     cd gitlab
-    sudo -u gitlab -H git checkout 4-1-stable
+    sudo -u gitlab -H git checkout 4-2-stable
     
 Copy the example GitLab config
 
@@ -224,7 +224,7 @@ Grant proper permissions to the MySQL User
     
 Exit MySQL Server and copy the example config, make sure to update username/password in config/database.yml
 
-    cp config/database.yml.mysql config/database.yml
+    sudo -u gitlab cp config/database.yml.mysql config/database.yml
     sudo -u gitlab -H vim config/database.yml
     
 ### 3. Install gems
@@ -253,7 +253,8 @@ GitLab needs to be able to commit and push changes to Gitolite. In order to do t
     
 ### 7. Install Init script
 
-    sudo curl --output /etc/init.d/gitlab https://raw.github.com/gitlabhq/gitlab-recipes/4-1-stable/init.d/gitlab
+    sudo mkdir /etc/init.d
+    sudo curl --output /etc/init.d/gitlab https://raw.github.com/gitlabhq/gitlab-recipes/4-2-stable/init.d/gitlab
     sudo chmod +x /etc/init.d/gitlab
     sudo sed -i "" "s/\/home\//\/Users\//g" /etc/init.d/gitlab
     sudo /etc/init.d/gitlab start
@@ -293,12 +294,15 @@ Nginx
 I chose to use the nginx/unicorn setup.
 
     brew install nginx
-    
+
+You might have gotten a warning about `/usr/local/sbin` not being in your PATH, so add it if necessary.
+
 Download an exmaple site config:
 
-    sudo curl --output /usr/local/etc/nginx/sites-available/gitlab https://raw.github.com/gitlabhq/gitlab-recipes/4-1-stable/nginx/gitlab
+    mkdir /usr/local/etc/nginx/sites-available
+    mkdir /usr/local/etc/nginx/sites-enabled
+    sudo curl https://raw.github.com/gitlabhq/gitlab-recipes/4-2-stable/nginx/gitlab --output /usr/local/etc/nginx/sites-available/gitlab
     sudo ln -s /usr/local/etc/nginx/sites-available/gitlab /usr/local/etc/nginx/sites-enabled/gitlab
-
 
 Modify the config file to match your setup, using the FQDN and IP of the host serving GitLab:
 
