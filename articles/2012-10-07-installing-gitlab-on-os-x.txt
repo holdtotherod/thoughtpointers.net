@@ -15,7 +15,7 @@ Lastly, the setup instructions are for Debian systems. From the install doc:
 
 Sounds like a challenge! After spending some time translating user/group management to OS X language, and using brew in place of apt-get, I finally got it working on the Mac Pro sitting in our cube. 
 
-System: OS X 10.7.5, Xcode: 4.6
+Run with: OS X 10.7.5 and OS X 10.8.2, Xcode 4.6
 
 System Users
 ------------
@@ -98,6 +98,12 @@ Install some GitLab dependencies. Follow caveats from redis installation to have
 I didn't want to use sqlite. Setup to start at launch, set root pass.
 
     brew install mysql
+    mysql.server start
+
+I also didn't want mysql listening on any address, so after the install I actually changed the bind address to 127.0.0.1. Basically open the `mysql.server` file that brew installs and edit line 283 to include `--bind-address=127.0.0.1 ` in teh args passed to `$bindir/mysqld_safe`.
+
+    vim /usr/local/bin/mysql.server
+    mysql.server stop
     mysql.server start
     
 GitLab requires python 2.5+ (python 3.x not supported)
@@ -230,9 +236,12 @@ Exit MySQL Server and copy the example config, make sure to update username/pass
 ### 3. Install gems
 
     sudo gem install charlock_holmes --version '0.6.9'
-    sudo gem install bundle
+    sudo gem install bundler
     rbenv rehash
     
+    sudo -u gitlab -H bash -l -c 'gem install bundler'
+    sudo -u gitlab -H bash -l -c 'rbenv rehash'
+
     sudo -u gitlab -H sh -c 'bundle install --deployment --without development test postgres'
     
 ### 4. Setup Git
@@ -297,6 +306,10 @@ I chose to use the nginx/unicorn setup.
 
 You might have gotten a warning about `/usr/local/sbin` not being in your PATH, so add it if necessary.
 
+You'll need to modify the nginx config file too. Just open it up and comment out all the server blocks as well as the `sendfile on;` line because I don't think sendfile works on OS X (I think I discovered this on an old install; can anyone confirm?). Then include the following line `include /usr/local/etc/nginx/sites-enabled/*;` after the `#gzip on;` line.
+
+    sudo vim /usr/local/etc/nginx/nginx.conf
+
 Download an exmaple site config:
 
     mkdir /usr/local/etc/nginx/sites-available
@@ -313,6 +326,8 @@ Start nginx, then modify the owner of the `proxy_temp` folder. If someone can fi
 
     sudo nginx
     sudo chown -R nobody:git /usr/local/var/run/nginx/proxy_temp
+
+_Note:_ I had extreme difficulty getting unicorn working on OS X 10.8.2, and I'm not sure why. The unicorn process just couldn't do the listen over the unix socket, so I edited `config/unicorn.rb` and commented out `listen "#{app_dir}/tmp/sockets/gitlab.socket"` and uncommented `listen "127.0.0.1:8080"`. I then modified `vim /usr/local/etc/nginx/sites-available/gitlab` so that line 6 read `server 127.0.0.1:8080;` instead of `server unix:/Users/gitlab/gitlab/tmp/sockets/gitlab.socket;`. If anyone figures out the stupid EINVAL error I was getting I will buy them lunch. 
     
 
 Installation Complete
