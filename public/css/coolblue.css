@@ -177,7 +177,7 @@ code {
 pre {
     overflow-x: scroll;
     margin: 0 0 24px 0;
-  	padding: 0 25px;
+  	padding: 0 4px;
   	display: block;
     clear: both;
   	border: 1px solid #E4E6E9;
