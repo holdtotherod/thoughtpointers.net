@@ -1,0 +1,21 @@
+---
+title: Using rbenv with GitLab Shell on OS X
+date: 18/04/2013
+
+The default ruby version for OS X <= 10.8.3 is 1.8.7. I really wish the default version of ruby shipped with OS X would just be updated already; I've run into my fair share of headaches installing and using ruby 1.9.3 on OS X using rvm or rbenv. Recently, I've switched to using rbenv as my ruby version manager. 
+
+I also recently upgraded to GitLab 5.0, which replaces Gitolite with their home-grown GitLab Shell. GitLab Shell requires ruby 1.9.3 to work, even when pushing commits to a repo over ssh. That means the ssh command needs to have rbenv loaded, or else ruby 1.8.7 will be used and the GitLab Shell command will fail:
+
+    $ git push origin master
+    /Users/git/gitlab-shell/bin/gitlab-shell:8: undefined method `require_relative' for main:Object (NoMethodError)
+    fatal: Could not read from remote repository.
+
+    Please make sure you have the correct access rights
+    and the repository exists.
+
+:( Adding `puts RUBY_VERSION` to the top of `/Users/git/gitlab-shell/bin/gitlab-shell` reveals rbenv isn't being loaded and 1.8.7 is being used. After a frustrating half hour, I finally figured out the solution. Add the following to the git user's `.bashrc`:
+
+    export PATH="/usr/local/bin:$PATH"
+    if which rbenv > /dev/null; then eval "$(rbenv init -)"; fi
+
+This is assuming the output of `which rbenv` when logged into the git user is `/usr/local/bin/rbenv`. Hopefully this saves someone a headache in the future.
