@@ -1,0 +1,5 @@
+---
+title: Hacking on GitLab - Getting the Development VM Running
+date: 21/04/2013
+
+The other day I decided to hack around on GitLab a little more and tweak some things to my liking. For example, I enabled more GitHub-like public repos in GitLab with this [commit](https://github.com/holdtotherod/gitlabhq/commit/b63333419adf616e1893e5bd36af16fce0903a0c). To get a dev environment setup, I used the [GitLab Vagrant VM](https://github.com/gitlabhq/gitlab-vagrant-vm), which is the officially recommended environment for GitLab development by the GitLab dev team. Unfortunately, there were some problems with the setup as of April 22, 2012. With a lot of tinkering around, I was finally able to get it working. [Here's a gist](https://gist.github.com/slottermoser/5402483) containing everything I had to do to get it up and running. Sorry, I would embed the gist, but this template style really messes with the gist styling and makes it useless. Maybe time to swith templates.
