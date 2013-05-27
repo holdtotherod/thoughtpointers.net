@@ -26,7 +26,7 @@ Unfortunately, this is not as easy as `sudo adduser git` like in linux. OS X rea
         sudo dscl . -create /Groups/git
         sudo dscl . -create /Groups/git PrimaryGroupID 1000
             
-2. Create a the `git` user for Gitolite.
+2. Create a the `git` user for GitLab.
     
     List the existing user ID's and select to choose a number not listed to use for the new user.
         
@@ -50,17 +50,11 @@ Unfortunately, this is not as easy as `sudo adduser git` like in linux. OS X rea
         sudo mkdir /Users/git
         sudo chown -R git:git /Users/git
 
-3. Symlink `/Users/git` to `/home/git`
+3. Add `git` user as allowed user for Remote Login
 
-    All of the GitLab scripts hardcode the path to the git user home directory as /home/git. In previous versions of this guide, I was modifying all the necessary GitLab files to replace /home/ with /Users. This time, I'm going to recommend using a symlink so you don't have to change all the file paths in the GitLab files.
+Unfortunately, I don't know how do this from the command-line. If you know, please share in the comments below. Otherwise, this is something that has to be done throught the System Preferences on the Sharing pane:
 
-    First, disable the auto_mount of /home on OS X. This is safe to do if you are not planning to add your Mac to Open Directory and allow logging in and home folder mounting by Open Directory users. This is not the same as using Open Directory to authenticate GitLab users. Read [more](http://apple.stackexchange.com/questions/44058/mac-os-x-how-to-symlink-home-to-users) on Apple StackExchange for more info.
-
-    Disable auto_mount of /home, reload auto_mount, and then add a symlink to /Users/git in /home:
-
-        sudo sed -i "" "s/\/home/#\/home/g" /etc/auto_master
-        sudo automount -v -c
-        sudo ln -s /Users/git /home/git
+![Git User Remote Login](/images/git-user-remote-login.png)
         
 4. Hide the `git` user from the OS X login window:
 
