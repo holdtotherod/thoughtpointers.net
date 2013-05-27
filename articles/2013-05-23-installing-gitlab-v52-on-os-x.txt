@@ -1,0 +1,336 @@
+---
+title: Installing GitLab v5.2 on OS X
+date: 23/05/2013
+
+It's time for an update installation guide to get GitLab v5.2 running on OS X! I'm particularly excited because v5.2 includes [my pull request](https://github.com/gitlabhq/gitlabhq/pull/3801) to make public repositories pages browsable and usable by users not on the projects team. It also adds some great featurs like repository forking, code searching, and gfm autocomplete. The addition of turbolinks is also a great performance boost; the site feels really snappy.
+
+Note: This is version 3 of my original article on installing GitLab on OS X. You can find my guide for installing GitLab 4.2 [here](http://thoughtpointers.net/2012/10/07/installing-gitlab-on-os-x/).
+
+Other Note: This guide is long, and there are some long lines you might want to copy and paste into your shell, which can be hard to do with my blog style. I'm going to eventually either fix the blog theme or move my blog to another service (don't worry, I'll preserve the URL/articles/comments), but I haven't gotten there yet. If you want an easier to read/copy version of this document, consider using the [raw Markdown file](https://raw.github.com/slottermoser/thoughtpointers.net/master/articles/2013-05-23-installing-gitlab-v52-on-os-x.txt).
+
+Run with: OS X 10.8.3, Xcode 4.6
+
+System Users
+------------
+
+Unfortunately, this is not as easy as `sudo adduser git` like in linux. OS X really wants you to use the graphical tool, but you can use the command-line tool `dscl` instead. Thanks to James Mead for help from his [blog](http://jamesmead.org/blog/2011-01-20-adding-a-user-in-osx-on-command-line), as well as Joe Turner for updated instructions on his [blog](http://joe-turner.net/2012/05/25/how-to-add-a-user-from-the-os-x-command-line-works-with-lion/).
+
+1. Create the `git` group for use by Gitolite and GitLab
+    
+    List existing group ID's in numerical order to choose a number not listed to use for the new group.
+    
+        dscl . -list /Groups PrimaryGroupID | awk '{print $2}' | sort -n
+        
+    I chose to use `1000`. Create the group and assign it the primary group ID.
+            
+        sudo dscl . -create /Groups/git
+        sudo dscl . -create /Groups/git PrimaryGroupID 1000
+            
+2. Create a the `git` user for Gitolite.
+    
+    List the existing user ID's and select to choose a number not listed to use for the new user.
+        
+        dscl . -list /Users UniqueID | awk '{print $2}' | sort -n
+            
+    Create the `git` user and assign the shell, real name, user ID, and group ID. The group ID should be the ID of the git group you created above.
+        
+        sudo dscl . -create /Users/git
+        sudo dscl . -create /Users/git UserShell /bin/bash
+        sudo dscl . -create /Users/git RealName "Git"
+        sudo dscl . -create /Users/git UniqueID "503"
+        sudo dscl . -create /Users/git PrimaryGroupID 1000
+        sudo dscl . -create /Users/git NFSHomeDirectory /Users/git
+
+    Note that you'll need to set a valid password for the git user if you actually want to login directly as the git user. However, I would advise against it from a security standpoint. Not setting the password disables password login attempts for the git user, which is good on a production system. If you ever need to login as the git user, you would just use `sudo su - git`. But for those who insist:
+    
+        sudo dscl . –passwd /Users/git PASSWORD
+
+    Now actually create the `git` user's home folder and make it owned by the `git` group.
+        
+        sudo mkdir /Users/git
+        sudo chown -R git:git /Users/git
+
+3. Symlink `/Users/git` to `/home/git`
+
+    All of the GitLab scripts hardcode the path to the git user home directory as /home/git. In previous versions of this guide, I was modifying all the necessary GitLab files to replace /home/ with /Users. This time, I'm going to recommend using a symlink so you don't have to change all the file paths in the GitLab files.
+
+    First, disable the auto_mount of /home on OS X. This is safe to do if you are not planning to add your Mac to Open Directory and allow logging in and home folder mounting by Open Directory users. This is not the same as using Open Directory to authenticate GitLab users. Read [more](http://apple.stackexchange.com/questions/44058/mac-os-x-how-to-symlink-home-to-users) on Apple StackExchange for more info.
+
+    Disable auto_mount of /home, reload auto_mount, and then add a symlink to /Users/git in /home:
+
+        sudo sed -i "" "s/\/home/#\/home/g" /etc/auto_master
+        sudo automount -v -c
+        sudo ln -s /Users/git /home/git
+        
+4. Hide the `git` user from the OS X login window:
+
+        sudo defaults write /Library/Preferences/com.apple.loginwindow HiddenUsersList -array-add git
+        
+    If you ever wanted to show the `git` user again, use the following command:
+    
+        sudo defaults delete /Library/Preferences/com.apple.loginwindow HiddenUsersList
+            
+Some installation prerequisites
+-------------------------------
+
+Get brew into tip-top shape:
+
+    brew update
+    brew --config # I had just updated Xcode, so need brew to configure itself again
+    brew doctor # -> Your system is raring to brew!
+    
+Install some GitLab dependencies. Follow caveats from redis installation to have redis start on boot.
+
+    brew install icu4c # Necessary for the charlock_holmes gem install later
+    brew install git # Install git 1.8 or greater... (see anecdote at the end)
+    brew install redis
+    ln -sfv /usr/local/opt/redis/*.plist ~/Library/LaunchAgents
+    launchctl load ~/Library/LaunchAgents/homebrew.mxcl.redis.plist
+    
+GitLab requires python 2.5+ (python 3.x not supported)
+
+    python --version # Confirm python 2.5+. OS X 10.7.5 has 2.7.1
+    sudo ln -s /usr/bin/python /usr/bin/python2 #GitLab looks for python2
+    
+More GitLab dependencies
+
+    sudo easy_install pip
+    sudo pip install pygments
+
+Install MySQL
+-------------
+
+I didn't want to use sqlite. Setup to start at launch, set root pass.
+
+    brew install mysql
+    ln -sfv /usr/local/opt/mysql/*.plist ~/Library/LaunchAgents
+    launchctl load ~/Library/LaunchAgents/homebrew.mxcl.mysql.plist
+
+I also didn't want mysql listening on any address, so after the install I actually changed the bind address to 127.0.0.1. Basically we need to edit `~/Library/LaunchAgents/homebrew.mxcl.mysql.plist` and change the file to pass `--bind-address=127.0.0.1` as an argument to the LaunchAgent. However, to do this, I needed to change the format of the plist file a little. I have opened up a pull request [here](https://github.com/mxcl/homebrew/pull/20090) since this should be the default, but until it is accepted, just use this [gist](https://gist.github.com/slottermoser/5651958).
+
+    curl -fsSL https://gist.github.com/slottermoser/5651958/raw/homebrew.mxcl.mysql.plist -o ~/Library/LaunchAgents/homebrew.mxcl.mysql.plist
+    launchctl unload ~/Library/LaunchAgents/homebrew.mxcl.mysql.plist
+    launchctl load ~/Library/LaunchAgents/homebrew.mxcl.mysql.plist
+
+Run `mysql_secure_installation` and set a reoot password, disallow remote root login, remove the test database, and reload the privelege tables.
+
+    mysql_secure_installation
+
+If for some reason that wasn't in your `$PATH`, it's in the mysql keg folder, i.e. `/usr/local/Cellar/mysql/5.6.10/bin/mysql_secure_installation` (depends on your myql version).
+
+
+Now setup the gitlab mysql user:
+
+    # Login to MySQL
+    mysql -u root -p
+
+    # Create a user for GitLab. (change $password to a real password)
+    mysql> CREATE USER 'gitlab'@'localhost' IDENTIFIED BY '$password';
+
+    # Create the GitLab production database
+    mysql> CREATE DATABASE IF NOT EXISTS `gitlabhq_production` DEFAULT CHARACTER SET `utf8` COLLATE `utf8_unicode_ci`;
+
+    # Grant the GitLab user necessary permissions on the table.
+    mysql> GRANT SELECT, LOCK TABLES, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER ON `gitlabhq_production`.* TO 'gitlab'@'localhost';
+
+    # Quit the database session
+    mysql> \q
+
+    # Try connecting to the new database with the new user
+    sudo -u git -H mysql -u gitlab -p -D gitlabhq_production
+
+Install Ruby
+------------
+
+Install Ruby 1.9.3 with rbenv and Homebrew. I switched from using rvm to rbenv, so hopefully I didn't miss any ruby build dependencies. If I did, let me know. Homebrew should be able to install anything missing.
+
+    brew install rbenv # Follow the caveats for your user
+    brew install ruby-build
+
+    # Make sure rbenv loads in the git user's shell
+    echo 'export PATH="/usr/local/bin:$PATH"' | sudo -u git tee -a /Users/git/.profile
+    echo 'if which rbenv > /dev/null; then eval "$(rbenv init -)"; fi' | sudo -u git tee -a /Users/git/.profile
+    sudo -u git cp /Users/git/.profile /Users/git/.bashrc
+
+    # Install ruby 1.9.3 for the git user
+    sudo -u git -H -i rbenv install 1.9.3-p392
+    sudo -u git -H -i 'rbenv global 1.9.3-p392'
+    
+Install ruby 1.9.3 for your user too and set rbenv to use it. This is for installing global gems later.
+
+    rbenv install 1.9.3-p392
+    rbenv global 1.9.3-p392  # I always want 1.9.3 to be used by my user
+
+Install GitLab Shell
+--------------------
+
+Taken from the [GitLab Install Doc](https://github.com/gitlabhq/gitlabhq/blob/master/doc/install/installation.md):
+
+> GitLab Shell is a ssh access and repository management software developed specially for GitLab.
+
+    cd /Users/git
+    sudo -u git git clone https://github.com/gitlabhq/gitlab-shell.git
+    cd gitlab-shell
+    sudo -u git git checkout v1.4.0
+    sudo -u git cp config.yml.example config.yml
+
+Set the gitlab_url. Replace `gitlab.example.com` wih your url
+
+    sudo -u git sed -i "" "s/localhost/gitlab.example.com/" config.yml
+
+OS X specific paths: Use /Users instead of /home, and change redis-cli path to homebrew's redis-cli
+
+    sudo -u git sed -i "" "s/\/home\//\/Users\//g" config.yml
+    sudo -u git sed -i "" "s/\/usr\/bin\/redis-cli/\/usr\/local\/bin\/redis-cli/" config.yml
+
+If you ever need to use the support shell scripts, you'll need to change the `home_dir` variable from `/home/git` to `/Users/git`
+
+Installing GitLab
+-----------------
+
+Wow, that was a lot of prerequisites! We're finally ready to download and install GitLab.
+
+### 1. Download GitLab v5.2
+
+    cd /Users/git
+    sudo -u git git clone https://github.com/gitlabhq/gitlabhq.git gitlab
+    cd gitlab
+    sudo -u git git checkout 5-2-stable
+
+### 2. Configure GitLab
+
+    # Copy the example GitLab config
+    sudo -u git cp config/gitlab.yml.example config/gitlab.yml
+    sudo -u git sed -i "" "s/\/home/\/Users/g" config/gitlab.yml
+
+    # Make sure to change "gitlab.example.com" to the fully-qualified domain name of your
+    # host serving GitLab where necessary
+    sudo -u git sed -i "" "s/localhost/gitlab.example.com/g" config/gitlab.yml
+
+    # Make sure GitLab can write to the log/ and tmp/ directories
+    sudo chown -R git log/
+    sudo chown -R git tmp/
+    sudo chmod -R u+rwX  log/
+    sudo chmod -R u+rwX  tmp/
+
+    # Create directory for satellites
+    sudo -u git mkdir /Users/git/gitlab-satellites
+
+    # Create directories for sockets/pids and make sure GitLab can write to them
+    sudo -u git mkdir tmp/pids/
+    sudo -u git mkdir tmp/sockets/
+    sudo chmod -R u+rwX  tmp/pids/
+    sudo chmod -R u+rwX  tmp/sockets/
+
+    # Create public/uploads directory otherwise backup will fail
+    sudo -u git mkdir public/uploads
+    sudo chmod -R u+rwX  public/uploads
+
+    # Copy the example Puma config
+    sudo -u git cp config/puma.rb.example config/puma.rb
+    sudo -u git sed -i "" "s/\/home/\/Users/g" config/puma.rb
+
+    # Configure Git global settings for git user, useful when editing via web
+    # Edit user.email according to what is set in gitlab.yml
+    sudo -u git -H git config --global user.name "GitLab"
+    sudo -u git -H git config --global user.email "gitlab@gitlab.example.com"
+
+### 3. GitLab MySQL config.
+
+Obviously use the gitlab mysql user password from earlier instead of the fake one below. Of course, using sed this way leaves your db password in your bash history, so you can use `sudo -u git vim config/database.yml` instead if you'd rather edit it manually instead of using sed for simple find and replace.
+
+    sudo -u git cp config/database.yml.mysql config/database.yml
+    sudo -u git sed -i "" "s/root/gitlab/g" config/database.yml
+    sudo -u git sed -i "" "s/secure password/ImAL33tDBPassw0rd!!/g" config/database.yml
+
+### 4. Install Gems
+
+    sudo gem install charlock_holmes --version '0.6.9.4'
+    sudo -u git -H bash -l -c 'gem install bundler'
+    sudo -u git -H bash -l -c 'bundle install --deployment --without development test postgres'
+
+### 5. Initialize Database and Activate Advanced Features
+
+    sudo -u git -H bash -l -c 'bundle exec rake gitlab:setup RAILS_ENV=production'
+
+### 6. Install Init script
+
+    sudo mkdir /etc/init.d
+    sudo curl --output /etc/init.d/gitlab https://raw.github.com/gitlabhq/gitlab-recipes/4-2-stable/init.d/gitlab
+    sudo chmod +x /etc/init.d/gitlab
+    sudo sed -i "" "s/\/home\//\/Users\//g" /etc/init.d/gitlab
+    sudo /etc/init.d/gitlab start
+
+### 7. Check Installation
+
+Double-check environment configuration
+
+    sudo -u git -H bash -l -c 'bundle exec rake gitlab:env:info RAILS_ENV=production'
+    
+Do a thorough check. Make sure everything is green.
+    
+    sudo -u git -H bash -l -c 'bundle exec rake gitlab:check RAILS_ENV=production'
+    
+The check gave 2 false positives which you can ignore:
+
+1. Sidekiq wasn't running. This was wrong as a simple ps aux | grep sidekiq showed a process `sidekiq 2.11.1 gitlab [0 of 25 busy]` running. This check actually has a bug in its regex that is [fixed](https://github.com/gitlabhq/gitlabhq/commit/dfe082fa1d3327c9bf6ee74a91f17044ff288150) on `master`.
+
+2. The script also complained about the init script not being up-to-date, but I assume that's because it was modified to use `/Users` instead of `/home`. You can safely ignore that warning.
+
+Nginx
+-----
+
+Last but not least, nginx setup! I chose to use the nginx/puma setup.
+
+    brew install nginx
+
+You might have gotten a warning about `/usr/local/sbin` not being in your PATH, so add it if necessary.
+
+You'll need to modify the nginx config file too. Just open it up and comment out all the server blocks as well as the `sendfile on;` line because I don't think sendfile works on OS X (I think I discovered this on an old install; can anyone confirm?). Then include the following line `include /usr/local/etc/nginx/sites-enabled/*;` after the `#gzip on;` line.
+
+    sudo vim /usr/local/etc/nginx/nginx.conf
+
+Download an exmaple site config:
+
+    mkdir /usr/local/etc/nginx/sites-available
+    mkdir /usr/local/etc/nginx/sites-enabled
+    sudo cp lib/support/nginx/gitlab /usr/local/etc/nginx/sites-available/gitlab
+    sudo ln -s /usr/local/etc/nginx/sites-available/gitlab /usr/local/etc/nginx/sites-enabled/gitlab
+
+Modify the config file to match your setup. Make sure to use your URL instead of `gitlab.example.com`.
+
+    sudo sed -i "" "s/YOUR_SERVER_IP/0.0.0.0/" /usr/local/etc/nginx/sites-available/gitlab
+    sudo sed -i "" "s/YOUR_SERVER_FQDN/gitlab.example.com/" /usr/local/etc/nginx/sites-available/gitlab
+    sudo sed -i "" "s/\/home\//\/Users\//g" /usr/local/etc/nginx/sites-available/gitlab
+
+Make the nginx logs folder
+
+    sudo mkdir /var/log/nginx
+
+Start nginx
+
+    sudo nginx
+
+Installation Complete
+---------------------
+
+Go to http://(your FDQN) and celebrate when you see the Gitlab login screen! It may take a little bit for GitLab to load the first time because it needs to compile all of the assets (CSS, Javascript, etc). The default login is admin@local.host password 5iveL!fe. 
+
+If you ever need to reboot your machine, mysql and redis will startup automatically, but you'll need to start gitlab and nginx manually.
+
+    sudo /etc/init.d/gitlab start
+    sudo nginx
+
+If you ever need to stop gitlab or nginx:
+
+    sudo /etc/init.d/gitlab stop
+    sudo nginx -s stop
+
+Why isn't this one massive script?
+----------------------------------
+
+It's really close. The are only a few variables you need to provide, like the MySQL password and the URL of your server. Also, you need to interactively comment out the default nginx server block, though I could provide a default one to curl, and you need to interactively create the mysql gitlab user / set priveleges. That too could be in a `.sql` file. I guess I have no real excuse other than that I am dang tired after writing this much. Maybe one day people :)
+
+Anecdote
+--------
+When writing this guide, I got to the very end and tested everything out and all was well, except for repo pushing. Even though I followed my own rbenv tip in my previous post, I could not get the update hook to use my rbenv version of ruby; it was still stubbornly using system ruby. After hours (no really, hours) of going over every last detail and comparing every file on my system to my reference system, the only difference I found was that my reference system's `$PATH` had a reference to a homebrew installed git version 1.8. Giving it one last shot I did a brew install git on my new machine and voila! The update hook started using the rbenv install ruby. I don't know what changed in git 1.7 to 1.8, but if someone wants to tell me why this happened, feel free to share in the comments.
