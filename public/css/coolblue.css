@@ -148,7 +148,7 @@ dd {
     padding-left: 20px;
 }
 
-p, dl { margin: 0 0 24px 0; }
+p, dl { margin: 0 0 12px 0; }
 
 blockquote {
   	margin: 12px 0;
@@ -176,7 +176,7 @@ code {
 }
 pre {
     overflow-x: scroll;
-    margin: 0 0 24px 0;
+    margin: 0 0 12px 0;
   	padding: 0 4px;
   	display: block;
     clear: both;
@@ -792,7 +792,7 @@ footer p.footer-right {
   margin-bottom: 20px;
 }
 .primary {
-    width: 533px;
+    width: 600px;
     float: right;
     padding-right: 25px;
 }
@@ -805,7 +805,7 @@ footer p.footer-right {
 
 aside {
     position: relative;
-    width: 135px;
+    width: 68px;
     float: left;
 }
 
@@ -814,7 +814,7 @@ aside p.dateinfo {
     background: url(../images/coolblue/date-bg.png) no-repeat;
     height: 70px;
     width: 60px;
-    margin: 10px 0 0 78px;
+    margin: 10px 0 0 28px;
     padding: 7px 0 0 0;
     font: bold 15px Arial, Helvetica, sans-serif;
     text-transform: uppercase;

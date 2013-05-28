@@ -20,7 +20,7 @@ I also recently upgraded to GitLab 5.0, which replaces Gitolite with their home-
 
 This is assuming the output of `which rbenv` when logged into the git user is `/usr/local/bin/rbenv`. Hopefully this saves someone a headache in the future.
 
-Update: In my new guide for [installing](http://thoughtpointers.net/2013/05/23/installing-gitlab-v52-on-os-x/), I spent some time trying to figure out why the update hook would not use rbenv install ruby and was instead using system ruby. This was even though `ssh -T git@gitlab.example.com` would work properly and greet my user, meaning rbenv installed ruby was being used there. The solution was to install a later version of git, 1.8 vs. 1.7 provided by Xcode at the time, via hombrew:
+Update: In my new guide for [installing GitLab v5.2](http://thoughtpointers.net/2013/05/23/installing-gitlab-v52-on-os-x/), I spent some time trying to figure out why the update hook would not use rbenv install ruby and was instead using system ruby. This was even though `ssh -T git@gitlab.example.com` would work properly and greet my user, meaning rbenv installed ruby was being used there. The solution was to install a later version of git, 1.8 vs. 1.7 provided by Xcode at the time, via hombrew:
 
   brew install git
 

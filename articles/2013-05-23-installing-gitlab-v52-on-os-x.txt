@@ -52,9 +52,9 @@ Unfortunately, this is not as easy as `sudo adduser git` like in linux. OS X rea
 
 3. Add `git` user as allowed user for Remote Login
 
-Unfortunately, I don't know how do this from the command-line. If you know, please share in the comments below. Otherwise, this is something that has to be done throught the System Preferences on the Sharing pane:
+    Unfortunately, I don't know how do this from the command-line. If you know, please share in the comments below. Otherwise, this is something that has to be done throught the System Preferences on the Sharing pane:
 
-![Git User Remote Login](/images/git-user-remote-login.png)
+    ![Git User Remote Login](/images/git-user-remote-login.png)
         
 4. Hide the `git` user from the OS X login window:
 
@@ -172,7 +172,7 @@ Set the gitlab_url. Replace `gitlab.example.com` wih your url
 
     sudo -u git sed -i "" "s/localhost/gitlab.example.com/" config.yml
 
-OS X specific paths: Use /Users instead of /home, and change redis-cli path to homebrew's redis-cli
+Use `/Users` instead of `/home`, and change redis-cli path to homebrew's redis-cli
 
     sudo -u git sed -i "" "s/\/home\//\/Users\//g" config.yml
     sudo -u git sed -i "" "s/\/usr\/bin\/redis-cli/\/usr\/local\/bin\/redis-cli/" config.yml
