@@ -22,7 +22,7 @@ toto = Toto::Server.new do
   # Add your settings here
   # set [:setting], [value]
   # 
-  set :url,       "http://thoughtpointers.net"
+  set :url,       "http://thoughtpointers.net/"
   set :author,    "Stephen Lottermoser"                # blog author
   set :title,     "Thought Pointers"                   # site title
   # set :root,      "index"                                   # page to load on /
